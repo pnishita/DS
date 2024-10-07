@@ -1,6 +1,5 @@
 package com.dependencyresolver.service;
 
-import com.dependencyresolver.entity.FeedConfig;
 import com.dependencyresolver.repository.FeedConfigRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;

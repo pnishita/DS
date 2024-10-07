@@ -10,8 +10,6 @@ import java.util.List;
 
 @Repository
 public interface FeedConfigRepo extends JpaRepository<FeedConfig,Long> {
-
-
     @Query("SELECT DISTINCT fc.feedGroup.groupId FROM FeedConfig fc WHERE fc.feed.id = :feedId")
     List<Long> findGroupIdsByFeedId(@Param("feedId") Long feedId);
 

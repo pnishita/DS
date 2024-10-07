@@ -11,11 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Map;
-import java.util.Set;
 @Slf4j
 @RestController
 public class NotificationReceiverController {
@@ -75,9 +70,9 @@ public class NotificationReceiverController {
         }
         return new ResponseEntity<>("Notification sent successfully!", HttpStatus.OK);
     }
-    @GetMapping("/groups")
-    public ResponseEntity<Map<Long, Set<Long>>> getFilteredGroups(@RequestParam Long currentFeedId) {
-        Map<Long, Set<Long>> groups = feedConfigService.findGroupContainingFeedId(currentFeedId);
-        return new ResponseEntity<>(groups, HttpStatus.OK);
-    }
+//    @GetMapping("/groups")
+//    public ResponseEntity<Map<Long, Set<Long>>> getFilteredGroups(@RequestParam Long currentFeedId) {
+//        Map<Long, Set<Long>> groups = feedConfigService.findGroupContainingFeedId(currentFeedId);
+//        return new ResponseEntity<>(groups, HttpStatus.OK);
+//    }
 }
