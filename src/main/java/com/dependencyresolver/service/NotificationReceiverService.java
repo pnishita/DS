@@ -6,6 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
+
 @Slf4j
 @Service
 public class NotificationReceiverService {
@@ -16,5 +20,13 @@ public class NotificationReceiverService {
     }
     public void saveNotification(Notification notification){
         notificationRepo.save(notification);
+    }
+
+    public List<Notification> findLatestNotificationsByCob(LocalDate cob) {
+        return notificationRepo.findLatestNotificationsByCob(cob);
+    }
+
+    public List<Notification> findLatestNotificationsByCobAndFeedGroup(LocalDate cob, Set<Long> feedGroupIds) {
+        return notificationRepo.findLatestNotificationsByCobAndFeedIds(cob, feedGroupIds);
     }
 }
