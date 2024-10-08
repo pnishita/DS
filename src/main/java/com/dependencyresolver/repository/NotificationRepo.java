@@ -11,12 +11,12 @@ import java.util.Set;
 
 @Repository
 public interface NotificationRepo extends JpaRepository<Notification,Long> {
-    @Query("SELECT n FROM Notification n WHERE n.id IN (" +
-            "SELECT MAX(n.id) FROM Notification n WHERE n.cob = :cob AND n.feed.id IN (" +
-            "SELECT DISTINCT fc.feed.id FROM FeedConfig fc) " +
+    @Query("SELECT n FROM Notification n WHERE (n.feed.id, n.id) IN (" +
+            "SELECT n.feed.id, MAX(n.id) as max_id FROM Notification n " +
+            "WHERE n.feed.id IN :feedIds AND n.cob = :cob " +
             "GROUP BY n.feed.id)")
-    List<Notification> findLatestNotificationsByCob(@Param("cob") LocalDate cob);
-    @Query("SELECT n FROM Notification n WHERE n.cob = :cob AND n.feed.id IN :feedGroupIds")
-    List<Notification> findLatestNotificationsByCobAndFeedIds(@Param("cob") LocalDate cob, @Param("feedGroupIds") Set<Long> feedGroupIds);
+    List<Notification> findLatestNotificationsByCobAndFeedIds(@Param("cob") LocalDate cob, @Param("feedIds") Set<Long> feedIds);
+
+
 }
 

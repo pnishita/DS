@@ -17,5 +17,5 @@ public class NotificationDTO {
         private String eventId;
         private String eventDateTime;
 
-    }
+}
 

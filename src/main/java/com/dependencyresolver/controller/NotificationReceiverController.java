@@ -1,5 +1,6 @@
 package com.dependencyresolver.controller;
 import com.dependencyresolver.dto.NotificationDTO;
+import com.dependencyresolver.dto.ResolvedGroupDTO;
 import com.dependencyresolver.entity.Feed;
 import com.dependencyresolver.entity.Notification;
 import com.dependencyresolver.service.*;
@@ -10,6 +11,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @RestController
@@ -32,7 +37,7 @@ public class NotificationReceiverController {
     }
 
     @PostMapping("/notification")
-    public ResponseEntity<String> sendNotification(@RequestBody String receivedNotification) {
+    public ResponseEntity<Object> sendNotification(@RequestBody String receivedNotification) {
         if (ObjectUtils.isEmpty(receivedNotification)) {
             return new ResponseEntity<>("Body is Null or Empty!", HttpStatus.NO_CONTENT);
         }
@@ -44,35 +49,44 @@ public class NotificationReceiverController {
             log.error("Invalid JSON format", e);
             return new ResponseEntity<>("Invalid JSON format", HttpStatus.BAD_REQUEST);
         }
+
+        // Validate required fields
         if (notificationDTO.getCob() == null ||
                 notificationDTO.getEventDateTime() == null ||
                 notificationDTO.getMessage() == null ||
                 notificationDTO.getAddress() == null) {
             return new ResponseEntity<>("Invalid JSON: Required fields are missing", HttpStatus.BAD_REQUEST);
         }
+
         Feed feed = feedService.getFeedByName(notificationDTO.getFeedName());
         if (feed == null) {
             log.error("Feed not found for the name: {}", notificationDTO.getFeedName());
             return new ResponseEntity<>("Feed not found for the provided feed name", HttpStatus.BAD_REQUEST);
         }
-        if (!feedConfigService.isFeedInAnyGroup(feed.getId())) {
+
+        // Fetch group details once and reuse
+        Map<String, Set<Long>> groups = feedConfigService.findGroupContainingFeedId(feed.getFeedName());
+        if (groups.isEmpty()) {
             log.info("Feed is not present in any group: {}", notificationDTO);
             return new ResponseEntity<>("Feed is not present in any group", HttpStatus.BAD_REQUEST);
         }
+
+        // Convert DTO to entity
         Notification notification = NotificationBuilder.fromDTOToEntity(notificationDTO, feed);
+
         try {
             notificationReceiverService.saveNotification(notification);
             log.info("Notification stored in database");
-            dependencyResolver.resolveFeedGroups(notification.getCob(), feed.getId());
+
+            // Resolve groups and return the list of ResolvedGroupDTOs
+            List<ResolvedGroupDTO> resolvedGroupDTOS = dependencyResolver.resolveFeedGroups(notification.getCob(), groups);
+
+            // Return resolved groups in the response body with a 200 OK status
+            return new ResponseEntity<>(resolvedGroupDTOS, HttpStatus.OK);
         } catch (Exception e) {
             log.error("Error saving notification", e);
             return new ResponseEntity<>("Error saving notification", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>("Notification sent successfully!", HttpStatus.OK);
     }
-//    @GetMapping("/groups")
-//    public ResponseEntity<Map<Long, Set<Long>>> getFilteredGroups(@RequestParam Long currentFeedId) {
-//        Map<Long, Set<Long>> groups = feedConfigService.findGroupContainingFeedId(currentFeedId);
-//        return new ResponseEntity<>(groups, HttpStatus.OK);
-//    }
+
 }

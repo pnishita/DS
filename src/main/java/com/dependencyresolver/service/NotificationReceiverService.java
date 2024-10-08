@@ -22,11 +22,7 @@ public class NotificationReceiverService {
         notificationRepo.save(notification);
     }
 
-    public List<Notification> findLatestNotificationsByCob(LocalDate cob) {
-        return notificationRepo.findLatestNotificationsByCob(cob);
-    }
-
-    public List<Notification> findLatestNotificationsByCobAndFeedGroup(LocalDate cob, Set<Long> feedGroupIds) {
-        return notificationRepo.findLatestNotificationsByCobAndFeedIds(cob, feedGroupIds);
+    public List<Notification> findLatestNotificationsByCobAndFeedGroup(LocalDate cob, Set<Long> feedIds) {
+        return notificationRepo.findLatestNotificationsByCobAndFeedIds(cob, feedIds);
     }
 }

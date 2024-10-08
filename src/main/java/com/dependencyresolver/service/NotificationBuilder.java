@@ -11,7 +11,7 @@ import java.time.format.DateTimeParseException;
 public class NotificationBuilder {
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final DateTimeFormatter formatter2 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
+    private NotificationBuilder() { }
     public static Notification fromDTOToEntity(NotificationDTO notificationDTO, Feed feed) {
         if (notificationDTO == null || feed == null) {
             throw new IllegalArgumentException("NotificationDTO and Feed must not be null");
