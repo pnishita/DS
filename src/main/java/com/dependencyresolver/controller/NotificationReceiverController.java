@@ -35,7 +35,6 @@ public class NotificationReceiverController {
         this.feedConfigService = feedConfigService;
         this.dependencyResolver = dependencyResolver;
     }
-
     @PostMapping("/notification")
     public ResponseEntity<Object> sendNotification(@RequestBody String receivedNotification) {
         if (ObjectUtils.isEmpty(receivedNotification)) {
@@ -49,7 +48,6 @@ public class NotificationReceiverController {
             log.error("Invalid JSON format", e);
             return new ResponseEntity<>("Invalid JSON format", HttpStatus.BAD_REQUEST);
         }
-
         // Validate required fields
         if (notificationDTO.getCob() == null ||
                 notificationDTO.getEventDateTime() == null ||
@@ -57,32 +55,34 @@ public class NotificationReceiverController {
                 notificationDTO.getAddress() == null) {
             return new ResponseEntity<>("Invalid JSON: Required fields are missing", HttpStatus.BAD_REQUEST);
         }
-
         Feed feed = feedService.getFeedByName(notificationDTO.getFeedName());
         if (feed == null) {
             log.error("Feed not found for the name: {}", notificationDTO.getFeedName());
             return new ResponseEntity<>("Feed not found for the provided feed name", HttpStatus.BAD_REQUEST);
         }
-
         // Fetch group details once and reuse
         Map<String, Set<Long>> groups = feedConfigService.findGroupContainingFeedId(feed.getFeedName());
         if (groups.isEmpty()) {
             log.info("Feed is not present in any group: {}", notificationDTO);
             return new ResponseEntity<>("Feed is not present in any group", HttpStatus.BAD_REQUEST);
         }
-
         // Convert DTO to entity
         Notification notification = NotificationBuilder.fromDTOToEntity(notificationDTO, feed);
-
         try {
             notificationReceiverService.saveNotification(notification);
             log.info("Notification stored in database");
 
+            log.info("Attempting to resolve groups for COB: {} and feed: {}", notificationDTO.getCob(), notificationDTO.getFeedName());
+
             // Resolve groups and return the list of ResolvedGroupDTOs
             List<ResolvedGroupDTO> resolvedGroupDTOS = dependencyResolver.resolveFeedGroups(notification.getCob(), groups);
-
-            // Return resolved groups in the response body with a 200 OK status
-            return new ResponseEntity<>(resolvedGroupDTOS, HttpStatus.OK);
+            if (resolvedGroupDTOS == null || resolvedGroupDTOS.isEmpty()) {
+                log.info("No groups were resolved for COB date: {}", notification.getCob());
+                return new ResponseEntity<>("No groups were resolved", HttpStatus.OK);
+            }
+            else
+                // Return resolved groups in the response body with a 201 created status
+                return new ResponseEntity<>(resolvedGroupDTOS, HttpStatus.CREATED);
         } catch (Exception e) {
             log.error("Error saving notification", e);
             return new ResponseEntity<>("Error saving notification", HttpStatus.INTERNAL_SERVER_ERROR);
