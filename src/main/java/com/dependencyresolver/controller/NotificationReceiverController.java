@@ -1,6 +1,5 @@
 package com.dependencyresolver.controller;
 import com.dependencyresolver.dto.NotificationDTO;
-import com.dependencyresolver.dto.ResolvedGroupDTO;
 import com.dependencyresolver.entity.Feed;
 import com.dependencyresolver.entity.Notification;
 import com.dependencyresolver.service.*;
@@ -12,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+
 import java.util.Map;
 import java.util.Set;
 
@@ -36,7 +35,7 @@ public class NotificationReceiverController {
         this.dependencyResolver = dependencyResolver;
     }
     @PostMapping("/notification")
-    public ResponseEntity<Object> sendNotification(@RequestBody String receivedNotification) {
+    public ResponseEntity<String> sendNotification(@RequestBody String receivedNotification) {
         if (ObjectUtils.isEmpty(receivedNotification)) {
             return new ResponseEntity<>("Body is Null or Empty!", HttpStatus.NO_CONTENT);
         }
@@ -73,16 +72,8 @@ public class NotificationReceiverController {
             log.info("Notification stored in database");
 
             log.info("Attempting to resolve groups for COB: {} and feed: {}", notificationDTO.getCob(), notificationDTO.getFeedName());
-
-            // Resolve groups and return the list of ResolvedGroupDTOs
-            List<ResolvedGroupDTO> resolvedGroupDTOS = dependencyResolver.resolveFeedGroups(notification.getCob(), groups);
-            if (resolvedGroupDTOS == null || resolvedGroupDTOS.isEmpty()) {
-                log.info("No groups were resolved for COB date: {}", notification.getCob());
-                return new ResponseEntity<>("No groups were resolved", HttpStatus.OK);
-            }
-            else
-                // Return resolved groups in the response body with a 201 created status
-                return new ResponseEntity<>(resolvedGroupDTOS, HttpStatus.CREATED);
+            dependencyResolver.resolveFeedGroups(notification.getCob(), groups);
+                return new ResponseEntity<>("Notification sent successfully", HttpStatus.CREATED);
         } catch (Exception e) {
             log.error("Error saving notification", e);
             return new ResponseEntity<>("Error saving notification", HttpStatus.INTERNAL_SERVER_ERROR);

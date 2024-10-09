@@ -13,16 +13,18 @@ import java.util.stream.Collectors;
 @Service
 public class DependencyResolver {
     private final NotificationReceiverService notificationReceiverService;
+    private final ResponseSender responseSender;
     @Autowired
-    public DependencyResolver(NotificationReceiverService notificationReceiverService) {
+    public DependencyResolver(NotificationReceiverService notificationReceiverService,
+                              ResponseSender responseSender) {
         this.notificationReceiverService = notificationReceiverService;
+        this.responseSender=responseSender;
     }
-    public List<ResolvedGroupDTO> resolveFeedGroups(LocalDate cob, Map<String, Set<Long>> groups) {
+    public void resolveFeedGroups(LocalDate cob, Map<String, Set<Long>> groups) {
         log.info("Fetching Groups :{}", groups);
 
         List<ResolvedGroupDTO> resolvedGroupDTOS=new ArrayList<>();
         groups.forEach((groupName, groupFeedIds) -> {
-
             List<Notification> latestNotifications=notificationReceiverService.findLatestNotificationsByCobAndFeedGroup(cob,groupFeedIds);
             log.info("List of Notifications in group {}:{}", groupName, latestNotifications);
             Set<Long> notificationFeedIds = latestNotifications.stream()
@@ -44,13 +46,12 @@ public class DependencyResolver {
                         .inboundFeeds(notificationResponses)
                         .build();
                 resolvedGroupDTOS.add(resolvedGroupDTO);
+                responseSender.sendResolvedGroups(resolvedGroupDTOS);
                 // Log the Response
                 log.info("Resolved Group Response: {}", resolvedGroupDTO);
-
             } else {
                 log.warn("Not all groupFeedIds are present in the latestNotifications for group {}.", groupName);
             }
         });
-        return resolvedGroupDTOS;
     }
 }
